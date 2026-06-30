@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KBS 레트로 시보 시계 (Multi-Aspect Edition)</title>
+    <title>KBS 레트로 시보 시계 (Robust Fullscreen Edition)</title>
     <!-- Tailwind CSS 탑재 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 구글 폰트 불러오기 -->
@@ -33,6 +33,74 @@
         .ratio-16-9 {
             aspect-ratio: 16 / 9;
             max-width: 600px; /* 가로가 더 넓어지도록 한계치 상향 */
+        }
+
+        /* 전체화면 API 대응 스타일 시트 (전체화면 돌입 시 테두리와 라운딩을 없애고 꽉 차게 조율) */
+        #screenContainer:fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            background-color: #030303 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #screenContainer:-webkit-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            background-color: #030303 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #screenContainer:-moz-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            background-color: #030303 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #screenContainer:-ms-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            background-color: #030303 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* 가상 전체화면 (전체화면 API가 거부되거나 작동하지 않을 때 대체 동작하는 안전 필러박스 스타일) */
+        .pseudo-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            background-color: #030303 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 9999 !important;
         }
 
         /* 커스텀 슬라이더 스타일링 */
@@ -65,10 +133,10 @@
     <header class="max-w-6xl w-full mx-auto mb-6 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-850 pb-4">
         <div>
             <div class="flex items-center justify-center md:justify-start gap-2 mb-1">
-                <span class="px-2 py-0.5 text-xs bg-gray-700 font-bold rounded">PURE MONOCHROME</span>
+                <span class="px-2 py-0.5 text-xs bg-indigo-900 text-indigo-200 font-bold rounded">PURE MONOCHROME</span>
                 <h1 class="text-xl font-bold tracking-tight">KBS 시보 아날로그 시계</h1>
             </div>
-            <p class="text-xs text-gray-400">4:3 및 16:9 종횡비 변경 지원 및 군더더기 없는 극상의 오리지널 뷰 복원</p>
+            <p class="text-xs text-gray-400">4:3 및 16:9 비율 변경 및 군더더기 없는 극상의 오리지널 전체화면 뷰 제공</p>
         </div>
         <div class="flex items-center gap-3">
             <span class="text-xs text-gray-500 font-mono" id="system-time">LOADING SYSTEM...</span>
@@ -85,10 +153,18 @@
             <div id="cabinetFrame" class="w-full max-w-[500px] bg-[#111318] p-4 md:p-6 rounded-3xl border border-gray-800 shadow-2xl transition-all duration-300">
                 
                 <!-- 시계 테두리 안쪽 무광 블랙 스크린 (가변 화면비 클래스 장착) -->
-                <div id="screenContainer" class="bg-[#030303] w-full rounded-2xl flex items-center justify-center relative overflow-hidden border border-gray-900 ratio-4-3 transition-all duration-300 mx-auto">
+                <div id="screenContainer" class="bg-[#030303] w-full rounded-2xl flex items-center justify-center relative overflow-hidden border border-gray-900 ratio-4-3 transition-all duration-300 mx-auto group">
                     
+                    <!-- 시계 화면 우상단 플로팅 전체화면 토글 버튼 (마우스 오버시 부드럽게 노출) -->
+                    <button id="btnFullscreen" class="absolute top-4 right-4 z-30 bg-black/60 hover:bg-black/90 text-white/70 hover:text-white p-2.5 rounded-xl border border-gray-800/80 transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100" title="전체화면 표시">
+                        <!-- 전체화면 진입 아이콘 -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fullscreen-icon"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                        <!-- 전체화면 탈출 아이콘 -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="exit-fullscreen-icon hidden"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"/></svg>
+                    </button>
+
                     <!-- 내부 시계 상자 (비율 왜곡 방지를 위해 항상 정사각 영역을 유지하여 중앙 배치) -->
-                    <div class="h-full aspect-square p-6 flex items-center justify-center relative z-10">
+                    <div class="h-full aspect-square p-6 md:p-8 flex items-center justify-center relative z-10">
                         <!-- 고해상도 아날로그 시계 SVG -->
                         <svg id="analogClock" viewBox="0 0 400 400" class="w-full h-full select-none">
                             
@@ -186,7 +262,15 @@
             <div class="bg-[#111318] border border-gray-850 p-5 rounded-2xl shadow-lg flex flex-col gap-5">
                 <h3 class="font-bold text-xs tracking-wider text-gray-400 border-b border-gray-850 pb-2 uppercase">작동 옵션 설정</h3>
 
-                <!-- *. 화면비 변경 컨트롤 (추가된 핵심 기능) -->
+                <!-- *. 화면 전체보기 컨트롤 (폴백이 강화된 안전 전체화면 버튼) -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-semibold text-gray-300">화면 크게보기 (Display Mode)</label>
+                    <button id="btnControlFullscreen" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        🖥️ 전체화면 모드 (Fullscreen)
+                    </button>
+                </div>
+
+                <!-- *. 화면비 변경 컨트롤 -->
                 <div class="flex flex-col gap-2">
                     <div class="flex justify-between items-center">
                         <label class="text-xs font-semibold text-gray-300">화면 종횡비 설정 (Aspect Ratio)</label>
@@ -215,7 +299,7 @@
                     </div>
                 </div>
 
-                <!-- 2. 수동 제어 슬라이더 (모니터링용 내부 디지털 시계 포함) -->
+                <!-- 2. 수동 제어 슬라이더 -->
                 <div id="manualSlidersBlock" class="hidden flex-col gap-3 p-3 bg-[#16181f] rounded-xl border border-gray-850">
                     <div class="flex justify-between text-xs border-b border-gray-800 pb-1">
                         <span class="text-amber-400 font-bold">수동 조작 패널</span>
@@ -288,6 +372,7 @@
         let secondHandMode = "tick"; // 'sweep' or 'tick'
         let audioCtx = null;
         let lastPlayedMinuteSecond = "";
+        let isPseudoFullscreen = false; // 가상 전체화면 모드 여부
 
         // 수동 시보 테스트 수치 저장소
         let manualTime = {
@@ -316,6 +401,12 @@
         const systemTimeEl = document.getElementById('system-time');
         const powerLED = document.getElementById('powerLED');
 
+        // 전체화면 전용 컨트롤 매핑
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        const btnControlFullscreen = document.getElementById('btnControlFullscreen');
+        const fullscreenIcon = btnFullscreen.querySelector('.fullscreen-icon');
+        const exitFullscreenIcon = btnFullscreen.querySelector('.exit-fullscreen-icon');
+
         // 바늘 DOM
         const hourHandGroup = document.getElementById('hourHandGroup');
         const minuteHandGroup = document.getElementById('minuteHandGroup');
@@ -341,6 +432,121 @@
                 toast.classList.add('opacity-0');
             }, 2500);
         }
+
+        // --- 전체화면 상태 변경 통합 핸들러 (UI 클래스 갱신) ---
+        function handleFullscreenChangeState(isFS) {
+            if (isFS) {
+                fullscreenIcon.classList.add('hidden');
+                exitFullscreenIcon.classList.remove('hidden');
+                btnControlFullscreen.innerHTML = "🖥️ 전체화면 종료 (Exit)";
+                btnControlFullscreen.classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
+                btnControlFullscreen.classList.add('bg-red-700', 'hover:bg-red-600');
+            } else {
+                fullscreenIcon.classList.remove('hidden');
+                exitFullscreenIcon.classList.add('hidden');
+                btnControlFullscreen.innerHTML = "🖥️ 전체화면 모드 (Fullscreen)";
+                btnControlFullscreen.classList.remove('bg-red-700', 'hover:bg-red-600');
+                btnControlFullscreen.classList.add('bg-indigo-600', 'hover:bg-indigo-500');
+            }
+        }
+
+        // --- 가상 전체화면 강제 돌입 (폴백 시스템) ---
+        function enterPseudoFullscreen() {
+            isPseudoFullscreen = true;
+            screenContainer.classList.add('pseudo-fullscreen');
+            handleFullscreenChangeState(true);
+            showToast("🖥️ iframe 전체화면 제약으로 인해 시네마 가상 전체화면이 시작되었습니다. (나가기: ESC 또는 버튼 클릭)");
+        }
+
+        // --- 전체화면 토글 기능 구현 (HTML5 API + 가상 CSS 전체화면 복합 폴백) ---
+        function toggleFullscreen() {
+            const isNativeFS = !!(document.fullscreenElement || 
+                                 document.webkitFullscreenElement || 
+                                 document.mozFullScreenElement || 
+                                 document.msFullscreenElement);
+
+            if (isNativeFS || isPseudoFullscreen) {
+                // 전체화면 탈출
+                if (isNativeFS) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen().catch(() => {});
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+                if (isPseudoFullscreen) {
+                    isPseudoFullscreen = false;
+                    screenContainer.classList.remove('pseudo-fullscreen');
+                    handleFullscreenChangeState(false);
+                    showToast("🖥️ 전체화면 모드가 종료되었습니다.");
+                }
+            } else {
+                // 전체화면 진입
+                let promise = null;
+                try {
+                    if (screenContainer.requestFullscreen) {
+                        promise = screenContainer.requestFullscreen();
+                    } else if (screenContainer.webkitRequestFullscreen) {
+                        promise = screenContainer.webkitRequestFullscreen();
+                    } else if (screenContainer.mozRequestFullScreen) {
+                        promise = screenContainer.mozRequestFullScreen();
+                    } else if (screenContainer.msRequestFullscreen) {
+                        promise = screenContainer.msRequestFullscreen();
+                    } else {
+                        // 지원 브라우저 없음
+                        enterPseudoFullscreen();
+                    }
+
+                    // requestFullscreen 이 비동기 거부(Promise Rejection)되었을 때의 오류 보정
+                    if (promise && typeof promise.catch === 'function') {
+                        promise.catch((err) => {
+                            console.warn("전체화면 권한이 거부되어 가상 모드로 전환합니다:", err.message);
+                            enterPseudoFullscreen();
+                        });
+                    }
+                } catch (e) {
+                    // 동기 오류 보정 (Disallowed by permissions policy)
+                    console.warn("전체화면 호출 오류로 가상 모드를 구동합니다:", e.message);
+                    enterPseudoFullscreen();
+                }
+            }
+        }
+
+        // 네이티브 전체화면 상태 변경 감지 리스너
+        function handleNativeFullscreenChange() {
+            const isFS = !!(document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement);
+            handleFullscreenChangeState(isFS);
+            if (isFS) {
+                showToast("🖥️ 네이티브 전체화면 모드가 실행되었습니다. (나가기: ESC)");
+            }
+        }
+
+        // 이벤트 리스너 등록
+        btnFullscreen.addEventListener('click', toggleFullscreen);
+        btnControlFullscreen.addEventListener('click', toggleFullscreen);
+
+        document.addEventListener('fullscreenchange', handleNativeFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleNativeFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleNativeFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleNativeFullscreenChange);
+
+        // 가상 전체화면 해제를 위한 ESC 키다운 키 감지기 등록
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isPseudoFullscreen) {
+                isPseudoFullscreen = false;
+                screenContainer.classList.remove('pseudo-fullscreen');
+                handleFullscreenChangeState(false);
+                showToast("🖥️ 전체화면 모드가 종료되었습니다.");
+            }
+        });
+
 
         // --- 화면 비율 4:3 vs 16:9 핫 토글 기능 ---
         btnRatio43.addEventListener('click', () => {
